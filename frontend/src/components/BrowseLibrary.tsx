@@ -1,6 +1,7 @@
 import { Search, Filter, Star, Plus } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import api from '../services/api';
+   import { useNavigate } from 'react-router-dom';
 import BookCard from './BookCard';
 
 // Define the Book interface
@@ -21,6 +22,7 @@ const BrowseLibrary = () => {
   const [books, setBooks] = useState<Book[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const navigate = useNavigate();
 
   // Fetch books from the backend
   useEffect(() => {
@@ -133,11 +135,13 @@ const BrowseLibrary = () => {
       <div className="space-y-3">
         {filteredBooks.map((book) => (
           <div key={book.id} className="relative">
-            <BookCard book={book} variant="discover" />
+               <div onClick={() => navigate(`/book/${book.id}`)} className="cursor-pointer">
+                <BookCard book={book} variant="discover" />
+              </div>
             {book.status === 'want-to-read' ? (
               <button 
                 className="absolute top-4 right-4 bg-green-500 text-white p-2 rounded-full hover:bg-green-600 transition-colors shadow-lg"
-                onClick={() => handleAddBook(book.id)}
+                   onClick={(e) => { e.stopPropagation(); handleAddBook(book.id); }}
               >
                 <Plus size={16} />
               </button>

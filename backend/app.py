@@ -50,6 +50,10 @@ def save_books(books_data):
 # Initialize books from JSON file
 books = load_books()
 
+@app.route('/api/books', methods=['GET'])
+def get_books():
+    return jsonify(books)
+
 @app.route('/api/books/<int:book_id>', methods=['GET'])
 def get_book(book_id):
     for book in books:
@@ -111,4 +115,4 @@ if __name__ == '__main__':
     print(f"Starting Flask server on http://{FLASK_HOST}:{FLASK_PORT}")
     print("CORS enabled for development")
     print(f"Allowed origins: {CORS_ORIGINS}")
-    app.run(debug=FLASK_DEBUG, port=FLASK_PORT, host=FLASK_HOST) 
+    app.run(debug=FLASK_DEBUG, port=FLASK_PORT, host=FLASK_HOST)
