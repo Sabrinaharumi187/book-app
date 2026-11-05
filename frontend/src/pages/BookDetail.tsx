@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, Star } from 'lucide-react';
+import { ArrowLeft, Star, Plus, Check } from 'lucide-react';
 import api from '../services/api';
 
 interface Book {
@@ -14,12 +14,21 @@ interface Book {
   status: string;
 }
 
+const statusLabel: Record<string, string> = {
+  none: 'Belum ditambah',
+  'want-to-read': 'Ingin dibaca',
+  reading: 'Sedang dibaca',
+  read: 'Selesai',
+};
+
 const BookDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const [book, setBook] = useState<Book | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [adding, setAdding] = useState(false);
+  const [addError, setAddError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchBook = async () => {
@@ -37,6 +46,24 @@ const BookDetail = () => {
     fetchBook();
   }, [id]);
 
+  const inLibrary = !!book && book.status !== 'none' && book.status !== '';
+
+  const handleAdd = async () => {
+    if (!book) return;
+    try {
+      setAdding(true);
+      setAddError(null);
+      const response = await api.put<Book>(`/api/books/${book.id}`, {
+        status: 'want-to-read',
+      });
+      setBook(response.data);
+    } catch (err) {
+      setAddError('Gagal menambahkan ke library. Coba lagi.');
+    } finally {
+      setAdding(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 max-w-md mx-auto p-4">
       <button
@@ -51,20 +78,22 @@ const BookDetail = () => {
       {error && <p className="text-red-500">{error}</p>}
 
       {book && (
-        <div className="space-y-4">
+        <div className="space-y-5">
           <img
             src={book.cover}
             alt={book.title}
-            className="w-full rounded-xl object-cover"
+            className="w-40 h-60 mx-auto rounded-xl object-cover shadow-lg"
           />
-          <div>
+
+          <div className="text-center">
             <h1 className="text-2xl font-bold text-gray-800">{book.title}</h1>
             <p className="text-gray-600">{book.author}</p>
+            <div className="flex items-center justify-center space-x-1 text-yellow-500 mt-2">
+              <Star size={18} fill="currentColor" />
+              <span className="text-gray-800 font-medium">{book.rating}</span>
+            </div>
           </div>
-          <div className="flex items-center space-x-1 text-yellow-500">
-            <Star size={18} fill="currentColor" />
-            <span className="text-gray-800 font-medium">{book.rating}</span>
-          </div>
+
           <div className="grid grid-cols-3 gap-3 text-center">
             <div className="p-3 bg-blue-50 rounded-xl">
               <div className="font-bold text-blue-600">{book.pages}</div>
@@ -75,10 +104,32 @@ const BookDetail = () => {
               <div className="text-xs text-gray-600">Genre</div>
             </div>
             <div className="p-3 bg-purple-50 rounded-xl">
-              <div className="font-bold text-purple-600">{book.status}</div>
+              <div className="font-bold text-purple-600 text-sm">
+                {statusLabel[book.status] ?? book.status}
+              </div>
               <div className="text-xs text-gray-600">Status</div>
             </div>
           </div>
+
+          {inLibrary ? (
+            <div className="w-full flex items-center justify-center space-x-2 py-3 rounded-xl bg-green-100 text-green-700 font-medium">
+              <Check size={18} />
+              <span>In your library</span>
+            </div>
+          ) : (
+            <button
+              onClick={handleAdd}
+              disabled={adding}
+              className="w-full flex items-center justify-center space-x-2 py-3 rounded-xl bg-blue-500 hover:bg-blue-600 disabled:opacity-60 text-white font-medium"
+            >
+              <Plus size={18} />
+              <span>{adding ? 'Menambahkan...' : 'Add to Library'}</span>
+            </button>
+          )}
+
+          {addError && (
+            <p className="text-red-500 text-sm text-center">{addError}</p>
+          )}
         </div>
       )}
     </div>
